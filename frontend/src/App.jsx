@@ -11,6 +11,11 @@ import Layout from './components/Layout';
 import './App.css';
 
 function App() {
+    React.useEffect(() => {
+        console.log('App mounted');
+        console.log('API URL:', import.meta.env.VITE_API_URL);
+    }, []);
+
     return (
         <Router>
             <Routes>
