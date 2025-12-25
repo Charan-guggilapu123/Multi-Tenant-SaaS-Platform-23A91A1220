@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -8,13 +7,8 @@ import ProjectDetails from './pages/ProjectDetails';
 import Users from './pages/Users';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
-import './App.css';
 
 function App() {
-    React.useEffect(() => {
-        console.log('App mounted');
-        console.log('API URL:', import.meta.env.VITE_API_URL);
-    }, []);
 
     return (
         <Router>
