@@ -109,9 +109,67 @@ const seedDatabase = async () => {
             assignedTo: tenantAdmin.id
         });
 
-        console.log('Seeding complete!');
+        // 7. Create a second tenant to demonstrate multi-tenancy
+        const acmeTenant = await Tenant.create({
+            name: 'Acme Corporation',
+            subdomain: 'acme',
+            status: 'active',
+            subscriptionPlan: 'enterprise',
+            maxUsers: 50,
+            maxProjects: 30
+        });
+
+        // 8. Create Acme Tenant Admin
+        const acmeAdminHash = await bcrypt.hash('Acme@123', 10);
+        const acmeAdmin = await User.create({
+            tenantId: acmeTenant.id,
+            email: 'admin@acme.com',
+            passwordHash: acmeAdminHash,
+            fullName: 'Acme Admin',
+            role: 'tenant_admin'
+        });
+
+        // 9. Create Acme Regular User
+        const acmeUserHash = await bcrypt.hash('AcmeUser@123', 10);
+        const acmeUser = await User.create({
+            tenantId: acmeTenant.id,
+            email: 'user@acme.com',
+            passwordHash: acmeUserHash,
+            fullName: 'Acme User',
+            role: 'user'
+        });
+
+        // 10. Create Acme Project
+        const acmeProject = await Project.create({
+            tenantId: acmeTenant.id,
+            name: 'Enterprise Portal',
+            description: 'Internal enterprise portal development',
+            status: 'active',
+            createdBy: acmeAdmin.id
+        });
+
+        // 11. Create Acme Task
+        await Task.create({
+            tenantId: acmeTenant.id,
+            projectId: acmeProject.id,
+            title: 'Security Audit',
+            description: 'Conduct comprehensive security audit',
+            status: 'todo',
+            priority: 'critical',
+            assignedTo: acmeUser.id
+        });
+
+        console.log('✅ Seeding complete!');
+        console.log('📊 Database seeded with:');
+        console.log('  - 1 Super Admin');
+        console.log('  - 2 Tenants (Demo Company, Acme Corporation)');
+        console.log('  - 2 Tenant Admins');
+        console.log('  - 3 Regular Users');
+        console.log('  - 3 Projects');
+        console.log('  - 4 Tasks');
     } catch (error) {
-        console.error('Seeding error:', error);
+        console.error('❌ Seeding error:', error);
+        throw error;
     }
 };
 

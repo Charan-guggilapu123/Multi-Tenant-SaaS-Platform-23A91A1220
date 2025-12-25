@@ -447,50 +447,266 @@ curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
 
 ## 🐳 Docker Setup
 
+### Overview
+
+This application is fully containerized with Docker Compose orchestrating three services:
+- **database**: PostgreSQL 15 with automatic initialization
+- **backend**: Node.js/Express API with automatic migrations and seeding
+- **frontend**: React application with Vite build system
+
+All services start with a single command and are production-ready.
+
+### Quick Start
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd Multi-Tenant-SaaS-Platform
+
+# Start all services (database will initialize automatically)
+docker-compose up -d
+
+# Verify all services are healthy
+docker-compose ps
+
+# Check health endpoint
+curl http://localhost:5000/api/health
+# Expected: {"status":"ok","database":"connected"}
+
+# Access the application
+# Frontend: http://localhost:3000
+# Backend API: http://localhost:5000/api
+```
+
 ### Docker Compose Services
 
-| Service | Image | Port | Status |
-|---------|-------|------|--------|
-| database | postgres:15 | 5432 | Healthy ✓ |
-| backend | node:18-alpine | 5000 | Healthy ✓ |
-| frontend | node:18-alpine | 3000 | Running ✓ |
+| Service | Image | Port Mapping | Health Check | Auto-Init |
+|---------|-------|--------------|--------------|-----------|
+| database | postgres:15-alpine | 5432:5432 | ✅ pg_isready | N/A |
+| backend | Custom (node:18-alpine) | 5000:5000 | ✅ /api/health | ✅ Migrations + Seeds |
+| frontend | Custom (node:18-alpine) | 3000:3000 | N/A | ✅ Build on start |
+
+### Automatic Initialization
+
+**Database Migrations**: Automatically run when backend starts via `sequelize.sync({ alter: true })`
+
+**Seed Data Loading**: Automatically loads after migrations complete with:
+- 1 Super Admin
+- 2 Tenants (Demo Company, Acme Corporation)
+- 2 Tenant Admins  
+- 3 Regular Users
+- 3 Projects
+- 4 Tasks
+
+**No manual commands needed!** Everything initializes automatically.
+
+### Environment Variables
+
+All environment variables are defined in `docker-compose.yml`:
+
+```yaml
+Backend Environment:
+  NODE_ENV: production
+  DB_HOST: database
+  DB_PORT: 5432
+  DB_NAME: saas_db
+  DB_USER: postgres
+  DB_PASSWORD: postgres
+  JWT_SECRET: dev_secret_key_change_in_production_min_32_chars
+  JWT_EXPIRES_IN: 24h
+  PORT: 5000
+
+Frontend Environment:
+  VITE_API_URL: http://localhost:5000/api
+```
 
 ### Docker Commands
 
 ```bash
-# Start all services
+# Start all services in detached mode
 docker-compose up -d
 
-# View running containers
+# View all running containers
 docker-compose ps
 
-# View service logs
-docker-compose logs -f [service]
+# View logs for all services
+docker-compose logs -f
 
-# Execute command in container
-docker exec saas-backend npm run seed
+# View logs for specific service
+docker-compose logs -f backend
+docker-compose logs -f frontend
+docker-compose logs -f database
 
-# Stop all services
+# Stop all services (preserves data)
 docker-compose down
 
-# Remove all volumes and data
+# Stop and remove all volumes (complete cleanup)
 docker-compose down -v
 
-# Rebuild images
+# Rebuild images without cache
 docker-compose build --no-cache
 
-# Full reset
-docker-compose down -v && docker-compose build --no-cache && docker-compose up -d
+# Full rebuild and restart
+docker-compose down -v
+docker-compose build --no-cache
+docker-compose up -d
+
+# Execute command inside backend container
+docker exec -it backend sh
+docker exec -it backend npm run seed
+
+# Execute command inside database container
+docker exec -it database psql -U postgres -d saas_db
+
+# View container resource usage
+docker stats
 ```
 
 ### Docker Network
 
-All services communicate via internal Docker network:
+All services communicate via internal Docker bridge network `saas-network`:
+
 ```
-database:5432 (accessible as 'database' hostname)
-backend:5000  (accessible as 'backend' hostname)
-frontend:3000 (accessible as 'frontend' hostname)
+External Access:
+  frontend:  http://localhost:3000
+  backend:   http://localhost:5000
+  database:  localhost:5432
+
+Internal Communication:
+  backend → database:5432 (using hostname 'database')
+  frontend → backend:5000 (proxied through browser)
 ```
+
+### Dockerfile Details
+
+**Backend Dockerfile** (`backend/Dockerfile`):
+- Multi-stage build for optimization
+- Non-root user for security (nodejs:1001)
+- Automatic health check with curl
+- Automatic migrations and seeding via entrypoint.sh
+- Minimal Alpine Linux base (~50MB)
+
+**Frontend Dockerfile** (`frontend/Dockerfile`):
+- Multi-stage build (builder + production)
+- Production build optimization with Vite
+- Serves static files with vite preview
+- Non-root user for security
+- Minimal Alpine Linux base
+
+### Volume Management
+
+```bash
+# List all volumes
+docker volume ls
+
+# Inspect database volume
+docker volume inspect multi-tenant-saas-platform_db_data
+
+# Backup database volume
+docker run --rm \
+  -v multi-tenant-saas-platform_db_data:/data \
+  -v $(pwd):/backup \
+  alpine tar czf /backup/db-backup.tar.gz /data
+
+# Restore database volume
+docker run --rm \
+  -v multi-tenant-saas-platform_db_data:/data \
+  -v $(pwd):/backup \
+  alpine tar xzf /backup/db-backup.tar.gz -C /
+```
+
+### Troubleshooting
+
+**Services won't start:**
+```bash
+# Check if ports are already in use
+netstat -ano | findstr :5432
+netstat -ano | findstr :5000
+netstat -ano | findstr :3000
+
+# On Windows PowerShell:
+Get-NetTCPConnection -LocalPort 5432,5000,3000
+
+# Kill processes using those ports or change ports in docker-compose.yml
+```
+
+**Backend health check failing:**
+```bash
+# Check backend logs
+docker-compose logs backend
+
+# Common issues:
+# 1. Database not ready - wait for database health check to pass
+# 2. Migration errors - check logs for SQL errors
+# 3. Port conflicts - ensure 5000 is available
+```
+
+**Database connection errors:**
+```bash
+# Verify database is running
+docker-compose ps database
+
+# Check database logs
+docker-compose logs database
+
+# Test connection manually
+docker exec -it database psql -U postgres -d saas_db -c "SELECT version();"
+```
+
+**Frontend not accessible:**
+```bash
+# Check frontend logs
+docker-compose logs frontend
+
+# Verify build completed
+docker exec -it frontend ls -la dist/
+
+# Common issues:
+# 1. Build failed - check for TypeScript/ESLint errors
+# 2. Port 3000 in use - stop other services
+# 3. API connection issues - verify VITE_API_URL
+```
+
+**Complete rebuild needed:**
+```bash
+# Nuclear option - removes everything and rebuilds
+docker-compose down -v
+docker system prune -a --volumes -f
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+### Production Deployment
+
+For production deployment, update these settings:
+
+```yaml
+# docker-compose.prod.yml
+environment:
+  NODE_ENV: production
+  JWT_SECRET: <generate-strong-secret-256-bits>
+  DB_PASSWORD: <strong-database-password>
+  
+# Add SSL/TLS termination (nginx reverse proxy)
+# Enable HTTPS
+# Use environment-specific .env files
+# Implement proper secret management (HashiCorp Vault, AWS Secrets Manager)
+# Enable database backups
+# Configure monitoring and logging (ELK stack, Prometheus)
+```
+
+### Docker Best Practices Implemented
+
+✅ Multi-stage builds for smaller images  
+✅ Non-root users for security  
+✅ Health checks for all critical services  
+✅ Explicit service dependencies  
+✅ Volume persistence for data  
+✅ Network isolation  
+✅ Automatic initialization  
+✅ Minimal base images (Alpine Linux)  
+✅ Layer caching optimization  
+✅ Environment-based configuration  
 
 ---
 

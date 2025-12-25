@@ -4,7 +4,8 @@
             "email": "superadmin@system.com",
             "password": "Admin@123",
             "role": "super_admin",
-            "tenantId": null
+            "tenantId": null,
+            "description": "System-wide administrator with full access"
         },
         "tenants": [
             {
@@ -15,31 +16,122 @@
                 "admin": {
                     "email": "admin@demo.com",
                     "password": "Demo@123",
-                    "role": "tenant_admin"
+                    "role": "tenant_admin",
+                    "fullName": "Demo Admin"
                 },
                 "users": [
                     {
                         "email": "user1@demo.com",
                         "password": "User@123",
-                        "role": "user"
+                        "role": "user",
+                        "fullName": "Demo User 1"
                     },
                     {
                         "email": "user2@demo.com",
                         "password": "User@123",
-                        "role": "user"
+                        "role": "user",
+                        "fullName": "Demo User 2"
                     }
                 ],
                 "projects": [
                     {
                         "name": "Project Alpha",
-                        "description": "First demo project"
+                        "description": "First demo project",
+                        "status": "active",
+                        "tasks": [
+                            {
+                                "title": "Initial Setup",
+                                "description": "Setup the project environment",
+                                "status": "completed",
+                                "priority": "high",
+                                "assignedTo": "user1@demo.com"
+                            },
+                            {
+                                "title": "Design UI",
+                                "description": "Create initial mockups",
+                                "status": "in_progress",
+                                "priority": "medium",
+                                "assignedTo": "user2@demo.com"
+                            }
+                        ]
                     },
                     {
                         "name": "Project Beta",
-                        "description": "Second demo project"
+                        "description": "Second demo project",
+                        "status": "active",
+                        "tasks": [
+                            {
+                                "title": "Database Schema",
+                                "description": "Design the DB schema",
+                                "status": "todo",
+                                "priority": "high",
+                                "assignedTo": "admin@demo.com"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "Acme Corporation",
+                "subdomain": "acme",
+                "status": "active",
+                "subscriptionPlan": "enterprise",
+                "admin": {
+                    "email": "admin@acme.com",
+                    "password": "Acme@123",
+                    "role": "tenant_admin",
+                    "fullName": "Acme Admin"
+                },
+                "users": [
+                    {
+                        "email": "user@acme.com",
+                        "password": "AcmeUser@123",
+                        "role": "user",
+                        "fullName": "Acme User"
+                    }
+                ],
+                "projects": [
+                    {
+                        "name": "Enterprise Portal",
+                        "description": "Internal enterprise portal development",
+                        "status": "active",
+                        "tasks": [
+                            {
+                                "title": "Security Audit",
+                                "description": "Conduct comprehensive security audit",
+                                "status": "todo",
+                                "priority": "critical",
+                                "assignedTo": "user@acme.com"
+                            }
+                        ]
                     }
                 ]
             }
         ]
+    },
+    "dockerConfiguration": {
+        "ports": {
+            "database": "5432:5432",
+            "backend": "5000:5000",
+            "frontend": "3000:3000"
+        },
+        "serviceNames": {
+            "database": "database",
+            "backend": "backend",
+            "frontend": "frontend"
+        },
+        "startCommand": "docker-compose up -d",
+        "healthCheck": "http://localhost:5000/api/health",
+        "frontendUrl": "http://localhost:3000"
+    },
+    "apiEndpoints": {
+        "total": 19,
+        "categories": {
+            "auth": ["POST /api/auth/register", "POST /api/auth/login"],
+            "tenants": ["POST /api/tenants", "GET /api/tenants", "GET /api/tenants/:id", "PUT /api/tenants/:id", "DELETE /api/tenants/:id"],
+            "users": ["GET /api/users", "GET /api/users/:id", "PUT /api/users/:id", "DELETE /api/users/:id"],
+            "projects": ["POST /api/projects", "GET /api/projects", "GET /api/projects/:id", "PUT /api/projects/:id", "DELETE /api/projects/:id"],
+            "tasks": ["POST /api/projects/:projectId/tasks", "GET /api/projects/:projectId/tasks", "GET /api/tasks/:id", "PUT /api/tasks/:id", "DELETE /api/tasks/:id"]
+        }
     }
 }
