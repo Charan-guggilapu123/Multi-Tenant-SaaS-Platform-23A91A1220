@@ -1,8 +1,8 @@
 # Multi-stage build for optimized production image
 FROM node:18-alpine AS base
 
-# Install dependencies for health check and database wait
-RUN apk --no-cache add curl netcat-openbsd
+# Install dependencies for health check
+RUN apk --no-cache add curl
 
 WORKDIR /app
 
@@ -15,9 +15,6 @@ RUN npm ci --only=production && npm cache clean --force
 # Copy application source
 COPY . .
 
-# Make entrypoint script executable
-RUN chmod +x entrypoint.sh
-
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001 && \
@@ -27,5 +24,5 @@ USER nodejs
 
 EXPOSE 5000
 
-# Use entrypoint script for automatic initialization
-ENTRYPOINT ["./entrypoint.sh"]
+# Start the application directly (migrations and seeding handled by server.js)
+CMD ["node", "src/server.js"]

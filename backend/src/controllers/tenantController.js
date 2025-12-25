@@ -137,3 +137,49 @@ exports.getAllTenants = async (req, res) => {
         res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
 };
+
+exports.updateSubscription = async (req, res) => {
+    try {
+        const { tenantId } = req.params;
+        const { plan } = req.body;
+
+        if (!['free', 'pro', 'enterprise'].includes(plan)) {
+            return res.status(400).json({ success: false, message: 'Invalid plan' });
+        }
+
+        if (req.user.role !== 'super_admin' && req.user.tenantId !== tenantId) {
+            return res.status(403).json({ success: false, message: 'Access denied' });
+        }
+
+        const tenant = await Tenant.findByPk(tenantId);
+        if (!tenant) {
+            return res.status(404).json({ success: false, message: 'Tenant not found' });
+        }
+
+        const limits = {
+            free: { maxUsers: 5, maxProjects: 3 },
+            pro: { maxUsers: 25, maxProjects: 15 },
+            enterprise: { maxUsers: 100, maxProjects: 50 }
+        }[plan];
+
+        await tenant.update({
+            subscriptionPlan: plan,
+            maxUsers: limits.maxUsers,
+            maxProjects: limits.maxProjects
+        });
+
+        await AuditLog.create({
+            tenantId: tenant.id,
+            userId: req.user.id,
+            action: 'UPDATE_SUBSCRIPTION',
+            entityType: 'tenant',
+            entityId: tenant.id,
+            ipAddress: req.ip
+        });
+
+        res.status(200).json({ success: true, message: 'Subscription updated', data: tenant });
+    } catch (error) {
+        console.error('Update Subscription Error:', error);
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    }
+};

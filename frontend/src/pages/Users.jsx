@@ -53,35 +53,35 @@ const Users = () => {
         }
     };
 
-    if (loading) return <div>Loading...</div>;
+    if (loading) return <div className="text-center py-8 text-gray-300">Loading...</div>;
 
     return (
         <div>
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-gray-900">Users</h1>
+                <h1 className="text-2xl font-bold text-white">Users</h1>
                 <button
                     onClick={() => setShowModal(true)}
-                    className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+                    className="bg-black border border-gray-700 text-white px-4 py-2 rounded-md hover:bg-neutral-900"
                 >
                     Add User
                 </button>
             </div>
 
-            <div className="bg-white shadow overflow-hidden sm:rounded-md">
-                <ul className="divide-y divide-gray-200">
+            <div className="bg-neutral-800 border border-gray-800 overflow-hidden sm:rounded-md">
+                <ul className="divide-y divide-gray-700">
                     {users.map((user) => (
                         <li key={user.id}>
                             <div className="px-4 py-4 sm:px-6">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center">
-                                        <div className="text-sm font-medium text-indigo-600 truncate">{user.fullName}</div>
-                                        <div className="ml-2 text-sm text-gray-500">{user.email}</div>
+                                        <div className="text-sm font-medium text-white truncate">{user.fullName}</div>
+                                        <div className="ml-2 text-sm text-gray-300">{user.email}</div>
                                     </div>
                                     <div className="flex items-center">
-                                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 mr-4">
+                                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-900 text-blue-200 mr-4">
                                             {user.role}
                                         </span>
-                                        <button onClick={() => handleDelete(user.id)} className="text-red-600 hover:text-red-900 text-sm">
+                                        <button onClick={() => handleDelete(user.id)} className="text-red-300 hover:text-red-200 text-sm">
                                             Delete
                                         </button>
                                     </div>
@@ -93,44 +93,44 @@ const Users = () => {
             </div>
 
             {showModal && (
-                <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-lg max-w-md w-full p-6">
+                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4">
+                    <div className="bg-neutral-800 border border-gray-800 rounded-lg max-w-md w-full p-6 text-white">
                         <h2 className="text-xl font-bold mb-4">Add New User</h2>
                         <form onSubmit={handleCreate}>
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700">Full Name</label>
+                                <label className="block text-sm font-medium text-gray-300">Full Name</label>
                                 <input
                                     type="text"
                                     required
-                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm border p-2"
+                                    className="mt-1 block w-full bg-neutral-900 text-white border-gray-700 rounded-md focus:ring-0 focus:border-gray-600 border p-2"
                                     value={newUser.fullName}
                                     onChange={(e) => setNewUser({ ...newUser, fullName: e.target.value })}
                                 />
                             </div>
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700">Email</label>
+                                <label className="block text-sm font-medium text-gray-300">Email</label>
                                 <input
                                     type="email"
                                     required
-                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm border p-2"
+                                    className="mt-1 block w-full bg-neutral-900 text-white border-gray-700 rounded-md focus:ring-0 focus:border-gray-600 border p-2"
                                     value={newUser.email}
                                     onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
                                 />
                             </div>
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700">Password</label>
+                                <label className="block text-sm font-medium text-gray-300">Password</label>
                                 <input
                                     type="password"
                                     required
-                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm border p-2"
+                                    className="mt-1 block w-full bg-neutral-900 text-white border-gray-700 rounded-md focus:ring-0 focus:border-gray-600 border p-2"
                                     value={newUser.password}
                                     onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
                                 />
                             </div>
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700">Role</label>
+                                <label className="block text-sm font-medium text-gray-300">Role</label>
                                 <select
-                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm border p-2"
+                                    className="mt-1 block w-full bg-neutral-900 text-white border-gray-700 rounded-md focus:ring-0 focus:border-gray-600 border p-2"
                                     value={newUser.role}
                                     onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
                                 >
@@ -142,13 +142,13 @@ const Users = () => {
                                 <button
                                     type="button"
                                     onClick={() => setShowModal(false)}
-                                    className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md"
+                                    className="bg-neutral-900 border border-gray-700 text-white px-4 py-2 rounded-md"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="bg-indigo-600 text-white px-4 py-2 rounded-md"
+                                    className="bg-black border border-gray-700 text-white px-4 py-2 rounded-md"
                                 >
                                     Save
                                 </button>

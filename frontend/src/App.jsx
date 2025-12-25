@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import Projects from './pages/Projects';
 import ProjectDetails from './pages/ProjectDetails';
 import Users from './pages/Users';
+import Subscription from './pages/Subscription';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 
@@ -23,6 +24,7 @@ function App() {
                     <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
                     <Route path="/projects" element={<Layout><Projects /></Layout>} />
                     <Route path="/projects/:projectId" element={<Layout><ProjectDetails /></Layout>} />
+                    <Route path="/subscription" element={<Layout><Subscription /></Layout>} />
                     <Route path="/users" element={<Layout><Users /></Layout>} />
                 </Route>
 

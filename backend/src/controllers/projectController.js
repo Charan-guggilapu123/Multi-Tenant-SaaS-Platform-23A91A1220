@@ -42,6 +42,32 @@ exports.createProject = async (req, res) => {
     }
 };
 
+exports.getProject = async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        const tenantId = req.user.tenantId;
+
+        const project = await Project.findOne({
+            where: { id: projectId, tenantId },
+            include: [
+                { model: User, attributes: ['id', 'fullName', 'email'], as: 'creator' }
+            ]
+        });
+
+        if (!project) {
+            return res.status(404).json({ success: false, message: 'Project not found' });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: project
+        });
+    } catch (error) {
+        console.error('Get Project Error:', error);
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    }
+};
+
 exports.listProjects = async (req, res) => {
     try {
         const tenantId = req.user.tenantId;

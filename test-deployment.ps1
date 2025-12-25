@@ -66,12 +66,12 @@ function Test-Endpoint {
 Write-Host "Step 1: Checking Docker Services" -ForegroundColor Yellow
 Write-Host "-----------------------------------"
 
-$dockerStatus = docker-compose ps 2>&1
+$dockerStatus = docker compose ps 2>&1
 if ($dockerStatus -match "Up") {
     Write-Host "✓ Docker services are running" -ForegroundColor Green
 } else {
     Write-Host "✗ Docker services are not running!" -ForegroundColor Red
-    Write-Host "Please run: docker-compose up -d"
+    Write-Host "Please run: docker compose up -d"
     exit 1
 }
 Write-Host ""
@@ -89,14 +89,19 @@ try {
     $loginBody = @{
         email = "admin@demo.com"
         password = "Demo@123"
+        tenantSubdomain = "demo"
     } | ConvertTo-Json
-    
+
     $loginResponse = Invoke-RestMethod -Uri "http://localhost:5000/api/auth/login" -Method POST -Body $loginBody -ContentType "application/json" -ErrorAction Stop
-    
-    if ($loginResponse.token) {
-        Write-Host "✓ Login successful" -ForegroundColor Green
-        $token = $loginResponse.token
+
+    if ($loginResponse.success -and $loginResponse.data.token) {
+        Write-Host "✓ Login successful (Demo Admin)" -ForegroundColor Green
+        $token = $loginResponse.data.token
         Write-Host "Token: $($token.Substring(0, [Math]::Min(20, $token.Length)))..."
+        $Script:PASSED++
+    } elseif ($loginResponse.token) {
+        Write-Host "✓ Login successful (legacy shape)" -ForegroundColor Green
+        $token = $loginResponse.token
         $Script:PASSED++
     } else {
         Write-Host "✗ Login failed - No token received" -ForegroundColor Red
@@ -115,6 +120,8 @@ if ($token) {
     Write-Host "-----------------------------------"
     Test-Endpoint -Name "Get Current User" -Url "http://localhost:5000/api/auth/me" -ExpectedCode 200 -Token $token
     Test-Endpoint -Name "List Projects" -Url "http://localhost:5000/api/projects" -ExpectedCode 200 -Token $token
+    # Cross-tenant isolation check: attempt to list users for acme tenant with demo token should be forbidden or not found
+    Test-Endpoint -Name "Cross-tenant isolation (users)" -Url "http://localhost:5000/api/tenants/99999999-9999-9999-9999-999999999999/users" -ExpectedCode 403 -Token $token | Out-Null
     Write-Host ""
 }
 
@@ -136,12 +143,13 @@ Write-Host ""
 Write-Host "Step 6: Testing Database Connection" -ForegroundColor Yellow
 Write-Host "-----------------------------------"
 try {
-    $dbTest = docker exec database psql -U postgres -d saas_db -c "SELECT COUNT(*) FROM \`"Users\`";" 2>&1
-    if ($dbTest -match "count") {
-        Write-Host "✓ Database is accessible and seeded" -ForegroundColor Green
+    $dbTest = docker exec database psql -U postgres -d saas_db -t -A -c "SELECT COUNT(*) FROM users;" 2>&1
+    if ($dbTest -match "^[0-9]+$") {
+        Write-Host "✓ Database is accessible and seeded (users=$dbTest)" -ForegroundColor Green
         $Script:PASSED++
     } else {
         Write-Host "✗ Database query failed" -ForegroundColor Red
+        Write-Host "$dbTest" -ForegroundColor Yellow
         $Script:FAILED++
     }
 } catch {

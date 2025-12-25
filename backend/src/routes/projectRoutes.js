@@ -9,6 +9,10 @@ router.post('/', authMiddleware, projectController.createProject);
 // List Projects
 router.get('/', authMiddleware, projectController.listProjects);
 
+// Get Project Details
+router.get('/:projectId', authMiddleware, projectController.getProject);
+
+
 // Update Project
 router.put('/:projectId', authMiddleware, projectController.updateProject);
 
